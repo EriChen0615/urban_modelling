@@ -16,7 +16,7 @@ if __name__ == '__main__':
     orig = np.loadtxt("data/london_n/P.txt")
     xd = np.loadtxt("data/london_n/xd0.txt")
     nn, mm = np.shape(cost_mat)
-    theta = np.array([2., 0.5, .3/mm, 100., 1.3])
+    theta = np.array([2., 0.5*0.7e7, .3/mm, 100., 1.3])
     
     calc = Calc(theta, orig, cost_mat)
     sample = np.loadtxt('./output/hmc_samples0.5.txt')
@@ -46,5 +46,10 @@ if __name__ == '__main__':
 #    print('gradient at mean:', calc.grad(mean))
     print('potential at xd0:', calc.potential(xd))
 #    print('gradient at xd0:', calc.grad(xd))
-    
-    
+    pot = np.zeros(2000)
+    for i, x in enumerate(sample[8000:]):
+        pot[i] = calc.potential(x)
+    print('potential mean:',np.mean(pot))
+    print('potential var:',np.var(pot))
+    print('potential max:',np.max(pot))
+    print('potential min:',np.min(pot))    

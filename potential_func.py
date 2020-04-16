@@ -19,13 +19,22 @@ class Calc:
         self.nn, self.mm = cost_mat.shape
         self.cost_mat = cost_mat
         self.orig = orig
-        self.xx = 0
+        self.xx = None
     
     def _update_expsum(self, xx):
-        if self.expsum is None or (self.xx!=xx).any():
+        if self.expsum is None or self.xx is None or (self.xx!=xx).any():
             self.expsum = np.sum(np.exp(repmat(self.alpha*xx,nn,1) - self.beta*self.cost_mat), axis=1)
             self.xx = xx.copy()
-            
+    
+    def update_theta(self, theta):
+        self.alpha = theta[0]
+        self.beta = theta[1]
+        self.delta = theta[2]
+        self.gamma = theta[3]
+        self.kappa = theta[4]
+        if not self.xx is None:
+            self._update_expsum(self.xx)
+        
     def potential(self, xx):
         self._update_expsum(xx)
         v_utility = np.sum(orig*np.log(self.expsum)) * (-self.alpha)**-1

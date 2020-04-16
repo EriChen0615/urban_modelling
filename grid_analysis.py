@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Apr 13 23:32:41 2020
+
+@author: asus
+"""
 """
 Evaluates p(x | theta) over grid of alpha and beta values
 """
@@ -17,11 +23,11 @@ theta = np.array([2., 0.3*0.7e6, .3/mm, 100., 1.3])
 calc = Calc(theta, orig, cost_mat)
 
 # Set gamma value
-theta[3] = 100
+theta[3] = 1e4
 
 
 # To estimate z(theta) with Laplace approximation
-def laplace_z(calc):
+def laplace_z(m, calc):
     m = minimize(pot_value, xd, args=calc, method='L-BFGS-B', jac=True, options={'disp': False}).x
 #    A = pot_hess(m)
     A = calc.hessian(m)
@@ -31,7 +37,7 @@ def laplace_z(calc):
 
 
 # Initialize search grid
-grid_n = 100
+grid_n = 10
 alpha_values = np.linspace(0, 2.0, grid_n+1)[1:]
 beta_values = np.linspace(0, 1.4e6, grid_n+1)[1:]
 XX, YY = np.meshgrid(alpha_values, beta_values)
@@ -51,7 +57,6 @@ for i in range(grid_n):
 
         theta[0] = XX[i, j]
         theta[1] = YY[i, j]
-        calc.update_theta(theta)
         try:
             # Run L-BFGS with mm different starts
             m = xd
@@ -73,7 +78,6 @@ for i in range(grid_n):
             lap =  -pot_value(m, calc)[0] + lap_c1 -  half_log_det_A
             like_values[i, j] = -lap - pot_value(xd, calc)[0]
         except:
-            print("exception encountered in the try block")
             None
 
         # If minimize fails set value to previous, otherwise update previous
@@ -89,9 +93,8 @@ print("Fitted alpha and beta values:")
 print(XX[idx], YY[idx]*2./1.4e6, like_values[idx])
 np.savetxt("output/laplace_analysis" + str(theta[3]) + ".txt", like_values)
 plt.pcolor(XX, YY*2./1.4e6, like_values)
-plt.xlabel('alpha')
-plt.ylabel('beta')
 plt.xlim([np.min(XX), np.max(XX)])
 plt.ylim([np.min(YY)*2./1.4e6, np.max(YY)*2./1.4e6])
 plt.colorbar()
 plt.show()
+
