@@ -35,6 +35,8 @@ class Ising_2D_Calc:
         self.J = J
         self.B = B
         self.kB = 1.38064852e-23
+        self.x_prev = None
+        self.h = None
         
     def potential(self, x):
         """
@@ -47,9 +49,39 @@ class Ising_2D_Calc:
             sum1 += np.dot(x[i],x[i+1])
         for j in range(mm-1):
             sum2 += np.dot(x[:,j],x[:,j+1])
-        return -2 * self.J * (sum1+sum2)
-#        return -2 * (1/(self.kB*self.temp) * self.J) * (sum1+sum2)
-        
+        self.h =  -2 * (1/(self.kB*self.temp) * self.J) * (sum1+sum2)
+#        return -2 * self.J * (sum1+sum2)
+        return self.h
+
+    def efficient_potential(self, x):
+        if self.x_prev is None:
+            return self.potential(x)
+        else:
+            diff_ind = np.where((x - self.x_prev)!=0)
+            nn, mm = self.x_prev.shape
+            new_sum1 = 0
+            new_sum2 = 0
+            prev_sum1 = 0
+            prev_sum2 = 0
+            for i,j in zip(diff_ind[0], diff_ind[1]):
+                if i == 0 or i == nn-1:
+                    new_sum1 += x[i-1,j]*x[i,j] if i else x[i,j]*x[i+1,j]
+                    prev_sum1 += self.x_prev[i-1,j]*self.x_prev[i,j] if i else self.x_prev[i,j]*self.x_prev[i+1,j]
+                else:
+                    new_sum1 += x[i-1,j]*x[i,j] + x[i,j]*x[i+1,j]
+                    prev_sum1 += self.x_prev[i-1,j]*self.x_prev[i,j] + self.x_prev[i,j]*self.x_prev[i+1,j]
+                if j == 0 or j == mm-1:
+                    new_sum2 += x[i,j-1]*x[i,j] if j else x[i,j]*x[i,j+1]
+                    prev_sum2 += self.x_prev[i,j-1]*self.x_prev[i,j] if j else self.x_prev[i,j]*self.x_prev[i,j+1]
+                else:
+                    new_sum2 += x[i,j-1]*x[i,j] + x[i,j]*x[i,j+1]
+                    prev_sum2 += self.x_prev[i,j-1]*self.x_prev[i,j] + self.x_prev[i,j]*self.x_prev[i,j+1]
+            
+            new_h = -2 * (1/(self.kB*self.temp) * self.J) * (new_sum1+new_sum2)
+            prev_h =  -2 * (1/(self.kB*self.temp) * self.J) * (prev_sum1+prev_sum2)
+            self.h += new_h - prev_h
+            return self.h
+    
     def avg_magnet(self, x, N):
         """
         calculate the average magnetisation of the current configuration

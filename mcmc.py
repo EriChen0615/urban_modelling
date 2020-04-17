@@ -6,6 +6,7 @@ Created on Wed Apr 15 13:43:52 2020
 """
 
 import numpy as np
+import timeit
 
 class MH_Sampler:
     """
@@ -22,7 +23,7 @@ class MH_Sampler:
     where T is a transition function
 
     """
-    def __init__(self, h, T, N, d, x0=None, calc=None, h_args=None, T_args=None):
+    def __init__(self, h, T, N, x0, calc=None, h_args=None, T_args=None):
         """
         @parameters 
         h: potential function π(X)∝exp⁡(−h)
@@ -36,10 +37,9 @@ class MH_Sampler:
         self.h = h
         self.T = T
         self.N = N
-        self.d = d
         self.length = 0 # current length of the chain
         self.x = x0 # current configuration
-        self.X = [] # all samples
+        self.X = np.empty((self.N, *self.x.shape)) # all samples
         self.calc = calc # associated calculator
         self.T_args = T_args
         self.h_args = h_args
@@ -50,12 +50,21 @@ class MH_Sampler:
         n: the number of time to extend the Markov Chain 
         """
         nn = n or self.N-self.length
+        tic = timeit.default_timer()
         for i in range(nn):
             x_new = self.T(self.x)
             delta_h = self.calc.potential(x_new)-self.calc.potential(self.x) if self.calc else self.h(x_new, self.h_args) - self.h(self.x, self.h_args)
+#            delta_h = self.calc.efficient_potential(x_new)-self.calc.efficient_potential(self.x)
             transition_prob = np.min([np.exp(-delta_h),1])
-            print(transition_prob)
+#            print(transition_prob)
             self.x = x_new if np.random.uniform() <= transition_prob else self.x
-            self.X.append(self.x)
+            self.X[self.length+i] = self.x
             self.length += 1
-        
+            
+            if i % 1000 == 0:
+                toc = timeit.default_timer()
+                print(f"runing 1000 iterations takes {toc-tic} seconds")
+                tic = timeit.default_timer()
+    
+    def step(self):
+        self.run(1)

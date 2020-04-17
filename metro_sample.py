@@ -1,5 +1,17 @@
 # -*- coding: utf-8 -*-
 """
+Created on Fri Apr 17 00:56:49 2020
+
+@author: asus
+"""
+
+from potential_func import Calc
+from mcmc import MH_Sampler:
+import numpy as np
+import matplotlib.pyplot as plt
+
+# -*- coding: utf-8 -*-
+"""
 Created on Wed Apr 15 16:40:58 2020
 
 @author: Jinghong Chen
@@ -23,29 +35,19 @@ def flip_one_bit(x):
     flip_num = 5
     new_x[np.random.randint(N,size=flip_num), np.random.randint(N,size=flip_num)] *= -1
     return new_x
-
-def plot_config(x):
-    mm, nn = x.shape
-    Xv, Yv = np.meshgrid(np.arange(mm), np.arange(nn))
-    white_ind = x[-1]==1
-    black_ind = x[-1]==-1
-    plt.plot(Xv[white_ind],Yv[white_ind],'rs',linewidth=1, markersize=2)
-    plt.plot(Xv[black_ind],Yv[black_ind],'bs',linewidth=1, markersize=2)
-    plt.show()
     
 if __name__ == '__main__':
-    J = -1.0
-    B = 0
-    kB = 1.38064852e-23
-    temp = 300
-    calc = Ising_2D_Calc(temp, J, B)
-    sample_length = 30000
-#    x0 = np.random.choice([-1,1],size=(N,N))
-    x0 = np.ones((N,N)) # block initialization (test with negative J)
-#    x0 = repmat(np.array([[1,-1],[-1,1]]),N//2,N//2) # scattered initialization (test with positive J)
-    Xv, Yv = np.meshgrid(np.arange(N), np.arange(N))
+    cost_mat = np.loadtxt("data/london_n/cost_mat.txt")
+    orig = np.loadtxt("data/london_n/P.txt")
+    xd = np.loadtxt("data/london_n/xd0.txt")
+    nn, mm = np.shape(cost_mat)
+    theta = np.array([2., 0.5*0.7e7, .3/mm, 100., 1.3])
     
-    mcmc = MH_Sampler(h=None, T=flip_one_bit, N=sample_length, x0=x0, calc=calc)
+    calc = Calc(theta, orig, cost_mat)
+
+    sample_length = 30000
+    
+    mcmc = MH_Sampler(h=None, T=flip_one_bit, d=mm, N=sample_length, x0=xd, calc=calc)
     
     energy = []
     magnet = []
