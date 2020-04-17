@@ -50,20 +50,21 @@ class MH_Sampler:
         n: the number of time to extend the Markov Chain 
         """
         nn = n or self.N-self.length
+        c_length = self.length
         tic = timeit.default_timer()
-        for i in range(nn):
+        while self.length < c_length+nn:
             x_new = self.T(self.x)
             delta_h = self.calc.potential(x_new)-self.calc.potential(self.x) if self.calc else self.h(x_new, self.h_args) - self.h(self.x, self.h_args)
 #            delta_h = self.calc.efficient_potential(x_new)-self.calc.efficient_potential(self.x)
             transition_prob = np.min([np.exp(-delta_h),1])
 #            print(transition_prob)
             self.x = x_new if np.random.uniform() <= transition_prob else self.x
-            self.X[self.length+i] = self.x
+            self.X[self.length] = self.x
             self.length += 1
             
-            if i % 1000 == 0:
+            if self.length % 1000 == 0:
                 toc = timeit.default_timer()
-                print(f"runing 1000 iterations takes {toc-tic} seconds")
+#                print(f"runing 1000 iterations takes {toc-tic} seconds")
                 tic = timeit.default_timer()
     
     def step(self):

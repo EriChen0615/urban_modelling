@@ -37,9 +37,9 @@ if __name__ == '__main__':
     J = -1.0
     B = 0
     kB = 1.38064852e-23
-    temp = 300
+    temp = 10e23
     calc = Ising_2D_Calc(temp, J, B)
-    sample_length = 30000
+    sample_length = 500
 #    x0 = np.random.choice([-1,1],size=(N,N))
     x0 = np.ones((N,N)) # block initialization (test with negative J)
 #    x0 = repmat(np.array([[1,-1],[-1,1]]),N//2,N//2) # scattered initialization (test with positive J)
@@ -65,6 +65,9 @@ if __name__ == '__main__':
     plt.title('Average Magnetisation')
     plt.show()
     mcmc.run()
+    plot_config(mcmc.X[-100])
+    plot_config(mcmc.X[-1])
+
     
     
     
