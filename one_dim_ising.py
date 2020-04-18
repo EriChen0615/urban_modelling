@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 """
+Created on Fri Apr 17 16:26:33 2020
+
+@author: Jinghong Chen
+"""
+# -*- coding: utf-8 -*-
+"""
 Created on Wed Apr 15 14:07:05 2020
 
 @author: Jinghong Chen
@@ -24,71 +30,6 @@ To verify that the sampling is reasonable, we can check
 """
 import numpy as np
 
-class Ising_2D_Calc:
-   
-    def __init__(self, temp, J, B):
-        """
-        @parameters
-        temp: temperature in Kelvin
-        """
-        self.temp = temp
-        self.J = J
-        self.B = B
-        self.kB = 1.38064852e-23
-        self.x_prev = None
-        self.h = None
-        
-    def potential(self, x):
-        """
-        h(x)=1/(k_B T) ∑24_i^d▒〖J x_i x_(i+1) 〗  and π(X)∝exp⁡(−E/(k_B T))
-        """
-        nn, mm = x.shape
-        sum1 = 0
-        sum2 = 0
-        for i in range(nn-1):
-            sum1 += np.dot(x[i],x[i+1])
-        for j in range(mm-1):
-            sum2 += np.dot(x[:,j],x[:,j+1])
-        self.h =  -2 * (1/(self.kB*self.temp) * self.J) * (sum1+sum2)
-#        return -2 * self.J * (sum1+sum2)
-        return self.h
-
-    def efficient_potential(self, x):
-        if self.x_prev is None:
-            return self.potential(x)
-        else:
-            diff_ind = np.where((x - self.x_prev)!=0)
-            nn, mm = self.x_prev.shape
-            new_sum1 = 0
-            new_sum2 = 0
-            prev_sum1 = 0
-            prev_sum2 = 0
-            for i,j in zip(diff_ind[0], diff_ind[1]):
-                if i == 0 or i == nn-1:
-                    new_sum1 += x[i-1,j]*x[i,j] if i else x[i,j]*x[i+1,j]
-                    prev_sum1 += self.x_prev[i-1,j]*self.x_prev[i,j] if i else self.x_prev[i,j]*self.x_prev[i+1,j]
-                else:
-                    new_sum1 += x[i-1,j]*x[i,j] + x[i,j]*x[i+1,j]
-                    prev_sum1 += self.x_prev[i-1,j]*self.x_prev[i,j] + self.x_prev[i,j]*self.x_prev[i+1,j]
-                if j == 0 or j == mm-1:
-                    new_sum2 += x[i,j-1]*x[i,j] if j else x[i,j]*x[i,j+1]
-                    prev_sum2 += self.x_prev[i,j-1]*self.x_prev[i,j] if j else self.x_prev[i,j]*self.x_prev[i,j+1]
-                else:
-                    new_sum2 += x[i,j-1]*x[i,j] + x[i,j]*x[i,j+1]
-                    prev_sum2 += self.x_prev[i,j-1]*self.x_prev[i,j] + self.x_prev[i,j]*self.x_prev[i,j+1]
-            
-            new_h = -2 * (1/(self.kB*self.temp) * self.J) * (new_sum1+new_sum2)
-            prev_h =  -2 * (1/(self.kB*self.temp) * self.J) * (prev_sum1+prev_sum2)
-            self.h += new_h - prev_h
-            return self.h
-    
-    def avg_magnet(self, x, N):
-        """
-        calculate the average magnetisation of the current configuration
-        """
-        return np.sum(x)/N**2
-
-
 class Ising_1D_Calc:
    
     def __init__(self, temp, J, B):
@@ -108,16 +49,16 @@ class Ising_1D_Calc:
         
         return  -2 * (1/(self.kB*temp) * self.J) * np.sum(x[:-1]*x[1:]) if temp else -2 * (1/(self.kB*self.temp) * self.J) * np.sum(x[:-1]*x[1:])
 
-
     
     def avg_magnet(self, x, N):
         """
         calculate the average magnetisation of the current configuration
         """
         return np.sum(x)/N**2
-    
+
 if __name__ == '__main__':
-    ising_calc = Ising_2D_Calc(1, 1, 0)
-    x = np.eye(3)
-    x[0,1] = 1
+    x = np.ones(5)
+    ising_calc = Ising_1D_Calc(1, 1, 0)
+    x[0] = 0
     print(ising_calc.potential(x))
+

@@ -1,22 +1,18 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Apr 15 16:40:58 2020
+Created on Wed Apr 17
 
 @author: Jinghong Chen
 """
 from ising import Ising_2D_Calc
 from mcmc import MH_Sampler
+from analysis import plot_autocorr
 import numpy as np
 from numpy.matlib import repmat
 import matplotlib.pyplot as plt
 
 
-N = 50
-
-def random_flip(x, N):
-    new_x = x.copy()
-    new_x[np.random.randint(N, size=10), np.random.randint(N, size=10)] *= -1
-    return new_x
+N = 100
 
 def flip_one_bit(x):
     new_x = x.copy()
@@ -29,16 +25,11 @@ def plot_config(x):
     Xv, Yv = np.meshgrid(np.arange(mm), np.arange(nn))
     white_ind = x[-1]==1
     black_ind = x[-1]==-1
-    plt.plot(Xv[white_ind],Yv[white_ind],'rs',linewidth=1, markersize=2)
-    plt.plot(Xv[black_ind],Yv[black_ind],'bs',linewidth=1, markersize=2)
+    plt.plot(Xv[white_ind],Yv[white_ind],'rs',linewidth=1, markersize=1)
+    plt.plot(Xv[black_ind],Yv[black_ind],'bs',linewidth=1, markersize=1)
+    plt.title('Configuration')
     plt.show()
-
-def plot_autocorr(x):
-    lag_range = 40
-    auto_corr = np.correlate(x,x,'valid')
-    auto_corr = auto_corr[:lag_range]
-    plt.hist(auto_corr/auto_corr[0],bins=lag_range)
-    plt.show()
+    
         
 if __name__ == '__main__':
     J = -1.0
@@ -46,20 +37,22 @@ if __name__ == '__main__':
     kB = 1.38064852e-23
     temp = 10e23
     calc = Ising_2D_Calc(temp, J, B)
-    sample_length = 500
+    sample_length = 5000
 #    x0 = np.random.choice([-1,1],size=(N,N))
     x0 = np.ones((N,N)) # block initialization (test with negative J)
-#    x0 = repmat(np.array([[1,-1],[-1,1]]),N//2,N//2) # scattered initialization (test with positive J)
+#    x0 = repmat(np.array([[1,-1]),N//2,N//2) # scattered initialization (test with positive J)
     Xv, Yv = np.meshgrid(np.arange(N), np.arange(N))
     
     mcmc = MH_Sampler(h=None, T=flip_one_bit, N=sample_length, x0=x0, calc=calc)
     
-    energy = []
-    magnet = []
+    energy = np.empty(sample_length)
+    magnet = np.empty(sample_length)
     for n in range(sample_length):
         mcmc.step()
-        energy.append(calc.potential(mcmc.x))
-        magnet.append(calc.avg_magnet(mcmc.x, N))
+        energy[n] = calc.potential(mcmc.x)
+        magnet[n] = calc.avg_magnet(mcmc.x, N)
+#        energy.append(calc.potential(mcmc.x))
+#        magnet.append(calc.avg_magnet(mcmc.x, N))
 #        white_ind = mcmc.X[-1]==1
 #        black_ind = mcmc.X[-1]==-1
 #        plt.plot(Xv[white_ind],Yv[white_ind],'rs',linewidth=1, markersize=2)
@@ -71,9 +64,10 @@ if __name__ == '__main__':
     plt.plot(np.arange(sample_length), magnet)
     plt.title('Average Magnetisation')
     plt.show()
-    mcmc.run()
+#    mcmc.run()
     plot_config(mcmc.X[-100])
     plot_config(mcmc.X[-1])
+    plot_autocorr(magnet[-200:])
 
     
     
